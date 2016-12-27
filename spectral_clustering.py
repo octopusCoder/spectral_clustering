@@ -120,19 +120,39 @@ def kMeans(data, clusters):
 
     return centers, clusters_category
 
+def get_presort_cluster():
+    f = open('cluster')
+    result = []
+    for line in f.readlines():
+        result.append(int(line.strip()))
+    return result
+
 if __name__ == '__main__':
-    
+    presort_cluster = get_presort_cluster()
+
+
+    clusters = 10
+    sigma = 20
     similarity = calculate_similarities()
-    clusters_category = spectral_clustering(similarity,20,10)
+    clusters_category = spectral_clustering(similarity,sigma,clusters)
     n = shape(clusters_category)[0]
-    result = [0]*10
+
     clusters_category_int = clusters_category.astype(int)
+
+    check_result = [[0 for i in range(clusters)] for j in range(clusters)]
     for i in range(n):
-        print(clusters_category_int[i,0])
-        result[clusters_category_int[i, 0]]+=1
-    result.sort()
-    print(result)
-    print("complete")
+        check_result[presort_cluster[i]][clusters_category_int[i,0]]+=1
+
+    sum = 0
+    for i in range(clusters):
+        for j in range(clusters):
+            print(check_result[i][j],end="")
+            print(",",end="")
+            sum+=check_result[i][j]
+        print()
+
+    print(sum)
+
 
 
 
