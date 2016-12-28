@@ -8,6 +8,7 @@ from numpy import *
 from scipy import sparse
 from scipy.sparse.linalg.eigen import arpack
 import time
+from sklearn import cluster
 
 def calculate_similarities():
     items = [line.strip() for line in open('new2000')]
@@ -79,46 +80,18 @@ def spectral_clustering(similarity, sigma, clusters):
         for j in range(column):
             vectors[i][j] = vectors[i][j] / sqrt_sum[i]
     print("perform k-means")
-    centers, clusters_category = kMeans(vectors, clusters)
+
+    clusters_category = sklearn_kmeans(vectors, clusters)
 
     return clusters_category
 
-def random_centers(data, clusters):
-    k = shape(data)[1]
-    centers = mat(zeros((clusters,k)))
-    for j in range(k):
-        minum = min(data[:,j])
-        distance = max(data[:,j]) - minum
-        centers[:,j] = mat(minum.real + distance.real * random.rand(k,1))
-    return centers
+def sklearn_kmeans(data, clusters):
+    k_means = cluster.KMeans(n_clusters=clusters)
+    #data_int =data.astype(int)
+    k_means.fit(data)
 
-def euclidean_metric(vec1, vec2):
-    return sqrt(sum(power(vec1 - vec2, 2)))
+    return k_means.labels_
 
-def kMeans(data, clusters):
-    n = shape(data)[0]
-    clusters_category = mat(zeros((n,2)))
-    centers = random_centers(data, clusters)
-    changed = True
-    while changed:
-        print("perform k-means", time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time())))
-        changed = False
-        for i in range(n):
-            min_distance = inf; cluster_index = -1
-            for j in range(clusters):
-                distance = euclidean_metric(centers[j,:],data[i,:])
-                if distance < min_distance:
-                    min_distance = distance; cluster_index = j
-
-            if clusters_category[i,0] != cluster_index:
-                changed = True
-                clusters_category[i,:] = cluster_index, min_distance.real**2
-
-        for center in range(clusters):
-            points_of_cluster = data[nonzero(clusters_category[:,0].A==center)[0]]
-            centers[center,:] = mean(points_of_cluster.real,axis=0)
-
-    return centers, clusters_category
 
 def get_presort_cluster():
     f = open('cluster')
@@ -130,18 +103,18 @@ def get_presort_cluster():
 if __name__ == '__main__':
     presort_cluster = get_presort_cluster()
 
-
     clusters = 10
     sigma = 20
     similarity = calculate_similarities()
+
     clusters_category = spectral_clustering(similarity,sigma,clusters)
+
+    print(clusters_category)
+
     n = shape(clusters_category)[0]
-
-    clusters_category_int = clusters_category.astype(int)
-
     check_result = [[0 for i in range(clusters)] for j in range(clusters)]
     for i in range(n):
-        check_result[presort_cluster[i]][clusters_category_int[i,0]]+=1
+        check_result[presort_cluster[i]][clusters_category[i]] += 1
 
     sum = 0
     for i in range(clusters):
@@ -152,6 +125,16 @@ if __name__ == '__main__':
         print()
 
     print(sum)
+
+    print("for echars")
+    for i in range(clusters):
+        for j in range(clusters):
+            if(i<j):
+                check_result[i][j],check_result[j][i] = check_result[j][i],check_result[i][j]
+            print(check_result[i][j], end="")
+            print(",", end="")
+        print()
+
 
 
 
