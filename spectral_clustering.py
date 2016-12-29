@@ -15,7 +15,6 @@ def calculate_similarities():
 
     print("begin to calculate similarity")
 
-    '''
     texts_tokenized = [[word.lower() for word in word_tokenize(document)] for document in items]
 
     english_stopwords = stopwords.words('english')
@@ -31,10 +30,11 @@ def calculate_similarities():
     print("stemmed")
     st = LancasterStemmer()
     texts_stemmed = [[st.stem(word) for word in document]for document in texts_filtered]
-    '''
+
 
     #new2000 has been processed
-    texts = [[word for word in document] for document in items]
+    #texts = [[word for word in document] for document in items]
+    texts = texts_stemmed
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
     dictionary = corpora.Dictionary(texts)
@@ -106,7 +106,7 @@ def get_presort_cluster():
 
 if __name__ == '__main__':
     presort_cluster = get_presort_cluster()
-
+    #print(presort_cluster)
     '''
     a = numpy.array([[1,2,3],
             [4,5,6]])
@@ -115,13 +115,30 @@ if __name__ == '__main__':
 
     clusters = 10
     sigma = 20
+    n = numpy.shape(presort_cluster)[0]
+    #i = 1
     similarity = calculate_similarities()
-    #print(similarity)
+
+    '''
+    print(numpy.shape(similarity))
+    ndarray_similarity = numpy.array(similarity)
+
+    f = open("similarity", "w")
+    for sim in ndarray_similarity.flat:
+        tmp = str(sim)+" "
+        f.write(tmp)
+        if i == 20:
+            f.write("\n")
+            i=0
+        i+=1
+    f.close()
+    '''
+
     ndarray_similarity = numpy.array(similarity)
     float_ndarray_similarity= ndarray_similarity.astype(numpy.float)
     labels = cluster.spectral_clustering(float_ndarray_similarity, n_clusters=10, eigen_solver='arpack')
-    #print(type(labels[0]))
-    n = numpy.shape(presort_cluster)[0]
+    #print(labels)
+
     check_result = [[0 for i in range(clusters)] for j in range(clusters)]
     for i in range(n):
         check_result[presort_cluster[i]][labels[i]] += 1
@@ -144,7 +161,17 @@ if __name__ == '__main__':
             print(check_result[i][j], end="")
             print(",", end="")
         print()
+
     '''
+    print("for echars")
+    for i in range(clusters):
+        for j in range(clusters):
+            if (i < j):
+                check_result[i][j], check_result[j][i] = check_result[j][i], check_result[i][j]
+            print(check_result[i][j], end="")
+            print(",", end="")
+        print()
+
     clusters_category = spectral_clustering(similarity,sigma,clusters)
 
     print(clusters_category)
