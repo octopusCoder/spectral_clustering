@@ -4,7 +4,7 @@ import logging
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem.lancaster import LancasterStemmer
-from numpy import *
+import numpy
 from scipy import sparse
 from scipy.sparse.linalg.eigen import arpack
 import time
@@ -53,6 +53,7 @@ def calculate_similarities():
 
     return index
 
+'''
 def spectral_clustering(similarity, sigma, clusters):
     print("get matrix S")
     sparse_similarity = sparse.csr_matrix(similarity)
@@ -92,6 +93,7 @@ def sklearn_kmeans(data, clusters):
 
     return k_means.labels_
 
+'''
 
 def get_presort_cluster():
     f = open('cluster')
@@ -100,13 +102,49 @@ def get_presort_cluster():
         result.append(int(line.strip()))
     return result
 
+
+
 if __name__ == '__main__':
     presort_cluster = get_presort_cluster()
+
+    '''
+    a = numpy.array([[1,2,3],
+            [4,5,6]])
+    print(type(a))
+    '''
 
     clusters = 10
     sigma = 20
     similarity = calculate_similarities()
+    #print(similarity)
+    ndarray_similarity = numpy.array(similarity)
+    float_ndarray_similarity= ndarray_similarity.astype(numpy.float)
+    labels = cluster.spectral_clustering(float_ndarray_similarity, n_clusters=10, eigen_solver='arpack')
+    #print(type(labels[0]))
+    n = numpy.shape(presort_cluster)[0]
+    check_result = [[0 for i in range(clusters)] for j in range(clusters)]
+    for i in range(n):
+        check_result[presort_cluster[i]][labels[i]] += 1
 
+    sum = 0
+    for i in range(clusters):
+        for j in range(clusters):
+            print(check_result[i][j], end="")
+            print(",", end="")
+            sum += check_result[i][j]
+        print()
+
+    print(sum)
+
+    print("for echars")
+    for i in range(clusters):
+        for j in range(clusters):
+            if (i < j):
+                check_result[i][j], check_result[j][i] = check_result[j][i], check_result[i][j]
+            print(check_result[i][j], end="")
+            print(",", end="")
+        print()
+    '''
     clusters_category = spectral_clustering(similarity,sigma,clusters)
 
     print(clusters_category)
@@ -134,7 +172,7 @@ if __name__ == '__main__':
             print(check_result[i][j], end="")
             print(",", end="")
         print()
-
+    '''
 
 
 
