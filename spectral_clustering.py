@@ -14,7 +14,7 @@ def calculate_similarities():
 
     print("begin to calculate similarity")
 
-    '''
+
     texts_tokenized = [[word.lower() for word in word_tokenize(document)] for document in items]
 
     english_stopwords = stopwords.words('english')
@@ -30,10 +30,12 @@ def calculate_similarities():
     print("stemmed")
     st = LancasterStemmer()
     texts_stemmed = [[st.stem(word) for word in document]for document in texts_filtered]
-    '''
+
 
     #new2000 has been processed
-    texts = [[word for word in document] for document in items]
+    #texts = [[word for word in document] for document in items]
+    texts = texts_stemmed
+
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
     dictionary = corpora.Dictionary(texts)
@@ -152,6 +154,15 @@ if __name__ == '__main__':
         print()
 
     print(sum)
+
+    print("for echars")
+    for i in range(clusters):
+        for j in range(clusters):
+            if (i < j):
+                check_result[i][j], check_result[j][i] = check_result[j][i], check_result[i][j]
+            print(check_result[i][j], end="")
+            print(",", end="")
+        print()
 
 
 
