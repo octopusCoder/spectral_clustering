@@ -4,16 +4,16 @@ import logging
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem.lancaster import LancasterStemmer
-from numpy import *
+import numpy
 from scipy import sparse
 from scipy.sparse.linalg.eigen import arpack
 import time
+from sklearn import cluster
 
 def calculate_similarities():
     items = [line.strip() for line in open('new2000')]
 
     print("begin to calculate similarity")
-
 
     texts_tokenized = [[word.lower() for word in word_tokenize(document)] for document in items]
 
@@ -35,7 +35,6 @@ def calculate_similarities():
     #new2000 has been processed
     #texts = [[word for word in document] for document in items]
     texts = texts_stemmed
-
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
     dictionary = corpora.Dictionary(texts)
@@ -54,6 +53,7 @@ def calculate_similarities():
 
     return index
 
+'''
 def spectral_clustering(similarity, sigma, clusters):
     print("get matrix S")
     sparse_similarity = sparse.csr_matrix(similarity)
@@ -81,46 +81,19 @@ def spectral_clustering(similarity, sigma, clusters):
         for j in range(column):
             vectors[i][j] = vectors[i][j] / sqrt_sum[i]
     print("perform k-means")
-    centers, clusters_category = kMeans(vectors, clusters)
+
+    clusters_category = sklearn_kmeans(vectors, clusters)
 
     return clusters_category
 
-def random_centers(data, clusters):
-    k = shape(data)[1]
-    centers = mat(zeros((clusters,k)))
-    for j in range(k):
-        minum = min(data[:,j])
-        distance = max(data[:,j]) - minum
-        centers[:,j] = mat(minum.real + distance.real * random.rand(k,1))
-    return centers
+def sklearn_kmeans(data, clusters):
+    k_means = cluster.KMeans(n_clusters=clusters)
+    #data_int =data.astype(int)
+    k_means.fit(data)
 
-def euclidean_metric(vec1, vec2):
-    return sqrt(sum(power(vec1 - vec2, 2)))
+    return k_means.labels_
 
-def kMeans(data, clusters):
-    n = shape(data)[0]
-    clusters_category = mat(zeros((n,2)))
-    centers = random_centers(data, clusters)
-    changed = True
-    while changed:
-        print("perform k-means", time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time())))
-        changed = False
-        for i in range(n):
-            min_distance = inf; cluster_index = -1
-            for j in range(clusters):
-                distance = euclidean_metric(centers[j,:],data[i,:])
-                if distance < min_distance:
-                    min_distance = distance; cluster_index = j
-
-            if clusters_category[i,0] != cluster_index:
-                changed = True
-                clusters_category[i,:] = cluster_index, min_distance.real**2
-
-        for center in range(clusters):
-            points_of_cluster = data[nonzero(clusters_category[:,0].A==center)[0]]
-            centers[center,:] = mean(points_of_cluster.real,axis=0)
-
-    return centers, clusters_category
+'''
 
 def get_presort_cluster():
     f = open('cluster')
@@ -129,21 +102,84 @@ def get_presort_cluster():
         result.append(int(line.strip()))
     return result
 
+
+
 if __name__ == '__main__':
     presort_cluster = get_presort_cluster()
-
+    #print(presort_cluster)
+    '''
+    a = numpy.array([[1,2,3],
+            [4,5,6]])
+    print(type(a))
+    '''
 
     clusters = 10
     sigma = 20
+    n = numpy.shape(presort_cluster)[0]
+    #i = 1
     similarity = calculate_similarities()
-    clusters_category = spectral_clustering(similarity,sigma,clusters)
-    n = shape(clusters_category)[0]
 
-    clusters_category_int = clusters_category.astype(int)
+    '''
+    print(numpy.shape(similarity))
+    ndarray_similarity = numpy.array(similarity)
+
+    f = open("similarity", "w")
+    for sim in ndarray_similarity.flat:
+        tmp = str(sim)+" "
+        f.write(tmp)
+        if i == 20:
+            f.write("\n")
+            i=0
+        i+=1
+    f.close()
+    '''
+
+    ndarray_similarity = numpy.array(similarity)
+    float_ndarray_similarity= ndarray_similarity.astype(numpy.float)
+    labels = cluster.spectral_clustering(float_ndarray_similarity, n_clusters=10, eigen_solver='arpack')
+    #print(labels)
 
     check_result = [[0 for i in range(clusters)] for j in range(clusters)]
     for i in range(n):
-        check_result[presort_cluster[i]][clusters_category_int[i,0]]+=1
+        check_result[presort_cluster[i]][labels[i]] += 1
+
+    sum = 0
+    for i in range(clusters):
+        for j in range(clusters):
+            print(check_result[i][j], end="")
+            print(",", end="")
+            sum += check_result[i][j]
+        print()
+
+    print(sum)
+
+    print("for echars")
+    for i in range(clusters):
+        for j in range(clusters):
+            if (i < j):
+                check_result[i][j], check_result[j][i] = check_result[j][i], check_result[i][j]
+            print(check_result[i][j], end="")
+            print(",", end="")
+        print()
+
+    '''
+    print("for echars")
+    for i in range(clusters):
+        for j in range(clusters):
+            if (i < j):
+                check_result[i][j], check_result[j][i] = check_result[j][i], check_result[i][j]
+            print(check_result[i][j], end="")
+            print(",", end="")
+        print()
+
+    clusters_category = spectral_clustering(similarity,sigma,clusters)
+
+    print(clusters_category)
+
+    n = shape(clusters_category)[0]
+    check_result = [[0 for i in range(clusters)] for j in range(clusters)]
+    for i in range(n):
+        check_result[presort_cluster[i]][clusters_category[i]] += 1
 
     sum = 0
     for i in range(clusters):
@@ -158,11 +194,12 @@ if __name__ == '__main__':
     print("for echars")
     for i in range(clusters):
         for j in range(clusters):
-            if (i < j):
-                check_result[i][j], check_result[j][i] = check_result[j][i], check_result[i][j]
+            if(i<j):
+                check_result[i][j],check_result[j][i] = check_result[j][i],check_result[i][j]
             print(check_result[i][j], end="")
             print(",", end="")
         print()
+    '''
 
 
 
