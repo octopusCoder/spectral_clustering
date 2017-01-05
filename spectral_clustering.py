@@ -32,9 +32,17 @@ def calculate_similarities():
     texts_stemmed = [[st.stem(word) for word in document]for document in texts_filtered]
 
 
-    #new2000 has been processed
-    #texts = [[word for word in document] for document in items]
-    texts = texts_stemmed
+    print("word count")
+    count_texts_stemmed = {}
+    for document in texts_stemmed:
+        for word in document:
+            if word in count_texts_stemmed:
+                count_texts_stemmed[word]+=1
+            else:
+                count_texts_stemmed[word]=1
+
+    print("remove once")
+    texts = [[word for word in document if(count_texts_stemmed[word]!=1)] for document in texts_stemmed ]
 
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
